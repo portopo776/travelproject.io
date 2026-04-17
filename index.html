@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Вояж-Тур — туристическая компания</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+
+        .contacts-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.contact-info {
+    flex: 1;          /* занимает доступное место, но не более */
+    min-width: 250px;
+}
+
+.map-placeholder {
+    flex: 1;          /* карта тоже будет занимать равную ширину */
+    min-width: 280px;
+    overflow: hidden; /* чтобы iframe не вылезал за границы */
+}
+
+.map-placeholder iframe {
+    width: 100%;
+    height: 400px;
+    display: block;
+    border: 0;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .contacts-grid {
+        flex-direction: column;
+    }
+}
+        /* ----- ОСНОВНЫЕ СТИЛИ ----- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #0D6E7D;
+            --accent: #F39C12;
+            --light-bg: #F9F9F9;
+            --text-dark: #333;
+            --white: #fff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --border-radius: 12px;
+        }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--text-dark);
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main { flex: 1; position: relative; }
+        h1, h2, h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .btn {
+            display: inline-block; padding: 12px 24px; border-radius: 30px; font-weight: 600;
+            text-decoration: none; transition: all 0.3s; border: none; cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .btn-primary { background: var(--accent); color: var(--white); }
+        .btn-primary:hover { background: #e67e22; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(243,156,18,0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: var(--white); }
+        
+        /* Шапка */
+        .header { background: var(--white); box-shadow: var(--shadow); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
+        .header__container { display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        .logo span { color: var(--accent); }
+        .nav__list { display: flex; list-style: none; gap: 30px; }
+        .nav__link { text-decoration: none; color: var(--text-dark); font-weight: 600; cursor: pointer; }
+        .nav__link:hover, .nav__link.active { color: var(--primary); }
+        .header__phone { display: flex; align-items: center; gap: 10px; }
+        .header__phone i { color: var(--accent); }
+        .header__phone a { text-decoration: none; color: var(--text-dark); font-weight: 600; }
+        
+        .burger { display: none; flex-direction: column; width: 30px; height: 22px; background: none; border: none; cursor: pointer; }
+        .burger span { width: 100%; height: 3px; background: var(--primary); border-radius: 3px; transition: 0.3s; }
+        .mobile-menu { display: none; position: fixed; top: 80px; left: 0; right: 0; background: var(--white); box-shadow: var(--shadow); padding: 20px; z-index: 99; transform: translateY(-150%); transition: 0.3s; }
+        .mobile-menu.active { transform: translateY(0); }
+        .mobile-nav__list { list-style: none; }
+        .mobile-nav__item { margin-bottom: 15px; }
+        .mobile-nav__link { text-decoration: none; color: var(--text-dark); font-size: 1.2rem; font-weight: 600; cursor: pointer; }
+
+        /* Страницы */
+        .pages-container { position: relative; min-height: 500px; }
+        .page { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; visibility: hidden; transform: translateY(20px); transition: 0.4s; }
+        .page.active { position: relative; opacity: 1; visibility: visible; transform: translateY(0); }
+
+        /* Hero-слайдер */
+        .hero-slider { position: relative; width: 100%; height: 550px; overflow: hidden; }
+        .hero-slides { position: relative; width: 100%; height: 100%; }
+        .hero-slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            opacity: 0; transition: opacity 1.2s ease-in-out;
+            display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white);
+        }
+        /* Фоновый цвет на случай отсутствия картинки */
+        .hero-slide {
+            background-color: #0D6E7D; /* fallback */
+        }
+        .hero-slide.active { opacity: 1; animation: kenburns 12s infinite alternate ease-in-out; }
+        .hero-slide::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+        }
+        @keyframes kenburns {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.1) translate(-1%, -1%); }
+        }
+        .hero-content { position: relative; z-index: 2; max-width: 800px; padding: 0 20px; animation: fadeInUp 0.8s ease-out; }
+        .hero-content h1 { font-size: 3.5rem; margin-bottom: 20px; text-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .hero-content p { font-size: 1.4rem; margin-bottom: 30px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .hero-content .btn { font-size: 1.2rem; padding: 16px 40px; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slider-dots { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 10; }
+        .slider-dot {
+            width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.6);
+            border: 2px solid transparent; cursor: pointer; transition: all 0.3s; backdrop-filter: blur(4px);
+        }
+        .slider-dot.active { background: var(--accent); transform: scale(1.4); border-color: var(--white); }
+        .slider-dot:hover { background: var(--white); }
+        
+        .slider-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px;
+            background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: var(--white); font-size: 1.5rem; cursor: pointer; transition: background 0.3s;
+            z-index: 10; border: none; backdrop-filter: blur(8px);
+        }
+        .slider-arrow:hover { background: rgba(255,255,255,0.5); }
+        .slider-arrow-left { left: 20px; }
+        .slider-arrow-right { right: 20px; }
+        @media (max-width: 768px) {
+            .hero-slider { height: 480px; }
+            .hero-content h1 { font-size: 2.5rem; }
+            .hero-content p { font-size: 1.2rem; }
+            .slider-arrow { display: none; }
+        }
+        @media (max-width: 480px) {
+            .hero-slider { height: 420px; }
+            .hero-content h1 { font-size: 2rem; }
+        }
+
+        /* Остальные секции */
+        .popular { padding: 60px 0; background: var(--light-bg); }
+        .tours-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        .tour-card { background: var(--white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow); }
+        .tour-card__img { width: 100%; height: 220px; object-fit: cover; background: #e0e0e0; }
+        .tour-card__content { padding: 20px; }
+        .tour-card__price { font-size: 1.5rem; font-weight: 700; color: var(--accent); margin: 15px 0; }
+        
+        .features { padding: 60px 0; }
+        .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; text-align: center; }
+        .feature-item i { font-size: 3rem; color: var(--primary); margin-bottom: 15px; }
+        
+        .testimonials { padding: 60px 0; background: var(--light-bg); }
+        .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+        .testimonial-card { background: var(--white); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--shadow); }
+        .testimonial-card__author { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+        .testimonial-card__author img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #ddd; }
+        .stars { color: var(--accent); }
+        
+        .consult { padding: 60px 0; background: var(--primary); color: var(--white); }
+        .consult h2 { color: var(--white); }
+        .consult-form { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .consult-form input { padding: 16px; border: none; border-radius: 30px; }
+        
+        .page-content { padding: 60px 0; }
+        .about-grid, .contacts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .about-img { width: 100%; border-radius: var(--border-radius); object-fit: cover; min-height: 300px; background: #e0e0e0; }
+        .contact-info i { color: var(--primary); width: 25px; }
+        .map-placeholder { background: #e0e0e0; height: 300px; border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; }
+        
+        .footer { background: #1a1a1a; color: #ccc; padding: 40px 0 20px; }
+        .footer__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
+        .footer__title { color: var(--white); margin-bottom: 20px; }
+        .footer__social a { color: #ccc; font-size: 1.5rem; margin-right: 15px; }
+        .footer__bottom { text-align: center; padding-top: 20px; border-top: 1px solid #333; }
+        
+        @media (max-width: 1024px) {
+            .features-grid, .testimonials-grid, .footer__grid { grid-template-columns: repeat(2, 1fr); }
+            .about-grid, .contacts-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .header__nav, .header__phone { display: none; }
+            .burger { display: flex; }
+            .mobile-menu { display: block; }
+            .features-grid, .testimonials-grid, .footer__grid, .tours-grid { grid-template-columns: 1fr; }
+        }
+        .text-center { text-align: center; }
+
+
+     
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="container header__container">
+        <a href="#" class="logo" data-page="home">Вояж<span>Тур</span></a>
+        <nav class="header__nav">
+            <ul class="nav__list">
+                <li><a class="nav__link active" data-page="home">Главная</a></li>
+                <li><a class="nav__link" data-page="about">О компании</a></li>
+                <li><a class="nav__link" data-page="contacts">Контакты</a></li>
+            </ul>
+        </nav>
+        <div class="header__phone">
+            <i class="fas fa-phone-alt"></i>
+            <a href="tel:+78005553535">8 (800) 555-35-XX</a>
+        </div>
+        <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
+    </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+    <ul class="mobile-nav__list">
+        <li class="mobile-nav__item"><a class="mobile-nav__link" data-page="home">Главная</a></li>
+        <li class="mobile-nav__item"><a class="mobile-nav__link" data-page="about">О компании</a></li>
+        <li class="mobile-nav__item"><a class="mobile-nav__link" data-page="contacts">Контакты</a></li>
+        <li class="mobile-nav__item"><a href="tel:+78005553535" class="mobile-nav__link"><i class="fas fa-phone-alt"></i> 8 (800) 555-35-XX</a></li>
+    </ul>
+</div>
+
+<main>
+    <div class="pages-container">
+        <div id="page-home" class="page active">
+            <section class="hero-slider" id="heroSlider">
+                <div class="hero-slides">
+                    <!-- Слайд 1: надёжное изображение + fallback цвет -->
+                    <div class="hero-slide active" style="background-image:url('img/bac1.jpg'); background-color: #1a5f6a;">
+                        <div class="hero-content">
+                            <h1>Откройте мир с ВояжТур (Учебный проект)</h1>
+                            <p>Лучшие направления, горящие туры и индивидуальный подход</p>
+                            <a href="#" class="btn btn-primary">Подобрать тур</a>
+                        </div>
+                    </div>
+                    <!-- Слайд 2 -->
+                    <div class="hero-slide" style="background-image: url('img/bac2.jpg'); background-color: #0e4d5e;">
+                        <div class="hero-content">
+                            <h1>Морские круизы со скидкой 20%</h1>
+                            <p>Незабываемые путешествия по Средиземноморью</p>
+                            <a href="#" class="btn btn-primary">Выбрать круиз</a>
+                        </div>
+                    </div>
+                    <!-- Слайд 3 -->
+                    <div class="hero-slide" style="background-image: url('img/bac3.jpg'); background-color: #0f5c5c;">
+                        <div class="hero-content">
+                            <h1>Экзотические туры в Таиланд</h1>
+                            <p>Раннее бронирование — выгода до 30%</p>
+                            <a href="#" class="btn btn-primary">Узнать больше</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="slider-arrow slider-arrow-left" id="prevSlide"><i class="fas fa-chevron-left"></i></button>
+                <button class="slider-arrow slider-arrow-right" id="nextSlide"><i class="fas fa-chevron-right"></i></button>
+                <div class="slider-dots" id="sliderDots"></div>
+            </section>
+
+            <section class="popular">
+                <div class="container">
+                    <h2>Популярные направления</h2>
+                    <div class="tours-grid">
+                        <!-- Карточка Турция -->
+                        <div class="tour-card">
+                            <img src="img/turkey.webp" alt="Турция" class="tour-card__img">
+                            <div class="tour-card__content">
+                                <h3 class="tour-card__title">Турция, Кемер</h3>
+                                <p>7 ночей, всё включено</p>
+                                <div class="tour-card__price">от 45 900 ₽</div>
+                                <a href="#" class="btn btn-outline tour-card__btn">Подробнее</a>
+                            </div>
+                        </div>
+                        <!-- Карточка Египет -->
+                        <div class="tour-card">
+                            <img src="img/egypt.jpg" alt="Египет" class="tour-card__img">
+                            <div class="tour-card__content">
+                                <h3 class="tour-card__title">Египет, Шарм-эль-Шейх</h3>
+                                <p>10 ночей, всё включено</p>
+                                <div class="tour-card__price">от 52 300 ₽</div>
+                                <a href="#" class="btn btn-outline tour-card__btn">Подробнее</a>
+                            </div>
+                        </div>
+                        <!-- Карточка Таиланд -->
+                        <div class="tour-card">
+                            <img src="img/Pukjet.webp" alt="Таиланд" class="tour-card__img">
+                            <div class="tour-card__content">
+                                <h3 class="tour-card__title">Таиланд, Пхукет</h3>
+                                <p>12 ночей, завтраки</p>
+                                <div class="tour-card__price">от 78 500 ₽</div>
+                                <a href="#" class="btn btn-outline tour-card__btn">Подробнее</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="features">
+                <div class="container">
+                    <h2>Почему выбирают нас</h2>
+                    <div class="features-grid">
+                        <div class="feature-item"><i class="fas fa-shield-alt"></i><h3>Надёжность</h3><p>Работаем с 2010 года</p></div>
+                        <div class="feature-item"><i class="fas fa-percent"></i><h3>Выгодные цены</h3><p>Скидки до 30%</p></div>
+                        <div class="feature-item"><i class="fas fa-headset"></i><h3>Поддержка 24/7</h3><p>Всегда на связи</p></div>
+                        <div class="feature-item"><i class="fas fa-globe"></i><h3>География туров</h3><p>Более 50 стран</p></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="testimonials">
+                <div class="container">
+                    <h2>Отзывы наших клиентов</h2>
+                    <div class="testimonials-grid">
+                        <div class="testimonial-card"><div class="testimonial-card__text">«Отдыхали с семьёй в Турции, всё на высшем уровне!»</div><div class="testimonial-card__author"><img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Елена" onerror="this.style.background='#0D6E7D'; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Ccircle cx=\'25\' cy=\'25\' r=\'25\' fill=\'%230D6E7D\'/%3E%3Ctext x=\'25\' y=\'32\' font-size=\'20\' fill=\'white\' text-anchor=\'middle\' font-family=\'Montserrat\'%3EЕС%3C/text%3E%3C/svg%3E'"><div><strong>Елена Смирнова</strong><div class="stars">★★★★★</div></div></div></div>
+                        <div class="testimonial-card"><div class="testimonial-card__text">«Брали тур на Пхукет. Цена ниже, сервис отличный.»</div><div class="testimonial-card__author"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Дмитрий" onerror="this.style.background='#0D6E7D'; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Ccircle cx=\'25\' cy=\'25\' r=\'25\' fill=\'%230D6E7D\'/%3E%3Ctext x=\'25\' y=\'32\' font-size=\'20\' fill=\'white\' text-anchor=\'middle\' font-family=\'Montserrat\'%3EДК%3C/text%3E%3C/svg%3E'"><div><strong>Дмитрий Козлов</strong><div class="stars">★★★★★</div></div></div></div>
+                        <div class="testimonial-card"><div class="testimonial-card__text">«Обращаемся не первый раз. Всё чётко!»</div><div class="testimonial-card__author"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Ольга" onerror="this.style.background='#0D6E7D'; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Ccircle cx=\'25\' cy=\'25\' r=\'25\' fill=\'%230D6E7D\'/%3E%3Ctext x=\'25\' y=\'32\' font-size=\'20\' fill=\'white\' text-anchor=\'middle\' font-family=\'Montserrat\'%3EОП%3C/text%3E%3C/svg%3E'"><div><strong>Ольга Петрова</strong><div class="stars">★★★★★</div></div></div></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="page-about" class="page">
+            <section class="page-content">
+                <div class="container">
+                    <h2>О компании «ВояжТур»</h2>
+                    <div class="about-grid">
+                        <div><p style="font-size:1.2rem;">Мы работаем с 2010 года и отправили более 50 000 туристов.</p><p>Наша миссия — сделать отдых доступным и безопасным.</p><p><i class="fas fa-check-circle"></i> Входим в реестр туроператоров</p><p><i class="fas fa-check-circle"></i> Финансовые гарантии</p></div>
+                        <div><img src="https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Офис" class="about-img" onerror="this.style.backgroundColor='#0D6E7D'; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'600\'%3E%3Crect width=\'800\' height=\'600\' fill=\'%230D6E7D\'/%3E%3Ctext x=\'400\' y=\'320\' font-size=\'30\' fill=\'white\' text-anchor=\'middle\' font-family=\'Montserrat\'%3E🏢 Офис ВояжТур%3C/text%3E%3C/svg%3E'"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="page-contacts" class="page">
+            <section class="page-content">
+                <div class="container">
+                    <h2>Контакты</h2>
+                    <div class="contacts-grid">
+                        <div class="contact-info">
+                            <h3>Свяжитесь с нами</h3>
+                            <p><i class="fas fa-map-marker-alt"></i> г. Москва, ул. Тверская, 15</p>
+                            <p><i class="fas fa-phone-alt"></i> <a href="tel:+78005553535">8 (800) 555-35-XX</a></p>
+                            <p><i class="fas fa-envelope"></i> info@voyazhtur.ru</p>
+                        </div>
+                        <div class="map-placeholder"> 
+                     <iframe src="https://yandex.ru/map-widget/v1/?ll=37.608517,55.764522&z=17&whatshere%5Bpoint%5D=37.606573%2C55.764490&whatshere%5Bzoom%5D=17&pt=37.606573%2C55.764490&mode=whatshere" width="100%" height="400" frameborder="0" allowfullscreen="true"></iframe height="400px">
+                     </div>   
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <section class="consult">
+        <div class="container">
+            <h2>Нужна помощь в подборе тура?</h2>
+            <form class="consult-form" id="consultForm">
+                <input type="text" placeholder="Ваше имя" required>
+                <input type="tel" placeholder="Телефон" required>
+                <button type="submit" class="btn">Получить консультацию</button>
+            </form>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer__grid">
+            <div><div class="footer__title">О компании</div><p>Ваш надёжный проводник.</p></div>
+            <div><div class="footer__title">Контакты</div><p><i class="fas fa-map-marker-alt"></i> Москва, Тверская, 15</p></div>
+            <div><div class="footer__title">Соцсети</div><div class="footer__social"><a href="#"><i class="fab fa-vk"></i></a></div></div>
+        </div>
+        <div class="footer__bottom">© 2026 ВояжТур</div>
+    </div>
+</footer>
+
+<script>
+    (function() {
+        // Переключение страниц
+        const pages = { home: document.getElementById('page-home'), about: document.getElementById('page-about'), contacts: document.getElementById('page-contacts') };
+        const navLinks = document.querySelectorAll('[data-page]');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const burger = document.getElementById('burgerBtn');
+        function switchPage(id) {
+            if (!pages[id]) return;
+            const cur = document.querySelector('.page.active');
+            if (cur === pages[id]) return;
+            if (cur) { cur.style.opacity = '0'; cur.style.transform = 'translateY(20px)'; }
+            setTimeout(() => {
+                Object.values(pages).forEach(p => p.classList.remove('active'));
+                pages[id].classList.add('active');
+                pages[id].style.opacity = ''; pages[id].style.transform = '';
+                navLinks.forEach(l => { l.classList.remove('active'); if (l.dataset.page === id) l.classList.add('active'); });
+                mobileMenu?.classList.remove('active');
+                burger?.querySelectorAll('span').forEach((s,i) => s.style.transform = i===1 ? 'none' : '');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 300);
+        }
+        navLinks.forEach(l => l.addEventListener('click', e => { e.preventDefault(); switchPage(l.dataset.page); }));
+        if (burger && mobileMenu) {
+            burger.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+                const spans = burger.querySelectorAll('span');
+                if (mobileMenu.classList.contains('active')) {
+                    spans[0].style.transform = 'rotate(45deg) translate(5px,6px)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'rotate(-45deg) translate(5px,-6px)';
+                } else { spans[0].style.transform = 'none'; spans[1].style.opacity = '1'; spans[2].style.transform = 'none'; }
+            });
+        }
+        document.getElementById('consultForm').addEventListener('submit', e => { e.preventDefault(); alert('Спасибо!'); e.target.reset(); });
+
+        // Слайдер
+        const slides = document.querySelectorAll('.hero-slide');
+        const dotsContainer = document.getElementById('sliderDots');
+        const prevBtn = document.getElementById('prevSlide');
+        const nextBtn = document.getElementById('nextSlide');
+        const slider = document.getElementById('heroSlider');
+        let current = 0, interval;
+        slides.forEach((_, i) => { const d = document.createElement('div'); d.className = 'slider-dot' + (i===0?' active':''); d.onclick = () => goToSlide(i); dotsContainer.appendChild(d); });
+        const dots = document.querySelectorAll('.slider-dot');
+        function updateSlides(i) {
+            slides.forEach((s, idx) => { s.classList.toggle('active', idx===i); if(idx===i) { s.style.animation = 'none'; s.offsetHeight; s.style.animation = 'kenburns 12s infinite alternate ease-in-out'; } });
+            dots.forEach((d, idx) => d.classList.toggle('active', idx===i));
+            current = i;
+        }
+        function next() { updateSlides((current+1)%slides.length); }
+        function prev() { updateSlides((current-1+slides.length)%slides.length); }
+        function goToSlide(i) { updateSlides(i); resetInterval(); }
+        function start() { interval = setInterval(next, 5000); }
+        function reset() { clearInterval(interval); start(); }
+        prevBtn?.addEventListener('click', () => { prev(); reset(); });
+        nextBtn?.addEventListener('click', () => { next(); reset(); });
+        slider?.addEventListener('mouseenter', () => clearInterval(interval));
+        slider?.addEventListener('mouseleave', start);
+        start();
+        let touchX; slider?.addEventListener('touchstart', e => touchX = e.changedTouches[0].screenX);
+        slider?.addEventListener('touchend', e => { const diff = touchX - e.changedTouches[0].screenX; if(diff>50) { next(); reset(); } else if(diff<-50) { prev(); reset(); } });
+    })();
+</script>
+</body>
+</html>
